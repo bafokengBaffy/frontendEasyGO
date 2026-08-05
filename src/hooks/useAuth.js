@@ -2,6 +2,7 @@
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '@/services/auth.service';
+import { googleAuthService } from '@/services/googleAuthService';
 import { setUser, logout, setLoading } from '@/store/slices/authSlice';
 import toast from 'react-hot-toast';
 
@@ -14,8 +15,9 @@ export const useAuth = () => {
     try {
       dispatch(setLoading(true));
       const result = await authService.login(email, password);
+      const role = result.user?.role;
       toast.success('Welcome back!');
-      navigate(result.user.role === 'admin' ? '/admin' : `/${result.user.role}`);
+      navigate(role === 'admin' ? '/admin' : role === 'driver' ? '/driver' : '/rider');
       return result;
     } catch (error) {
       toast.error(error.message);
@@ -103,6 +105,40 @@ export const useAuth = () => {
     }
   };
 
+  const loginWithGoogle = async (role = 'rider') => {
+    try {
+      dispatch(setLoading(true));
+      const result = await googleAuthService.handleGoogleSignIn(role);
+      if (result) {
+        toast.success('Welcome back!');
+        navigate(role === 'admin' ? '/admin' : role === 'driver' ? '/driver' : '/rider');
+      }
+      return result;
+    } catch (error) {
+      toast.error(error.message);
+      throw error;
+    } finally {
+      dispatch(setLoading(false));
+    }
+  };
+
+  const registerWithGoogle = async (role = 'rider') => {
+    try {
+      dispatch(setLoading(true));
+      const result = await googleAuthService.handleGoogleSignIn(role);
+      if (result) {
+        toast.success('Account created successfully!');
+        navigate(role === 'admin' ? '/admin' : role === 'driver' ? '/driver' : '/rider');
+      }
+      return result;
+    } catch (error) {
+      toast.error(error.message);
+      throw error;
+    } finally {
+      dispatch(setLoading(false));
+    }
+  };
+
   return {
     user,
     isAuthenticated,
@@ -114,5 +150,7 @@ export const useAuth = () => {
     changePassword,
     forgotPassword,
     resetPassword,
+    loginWithGoogle,
+    registerWithGoogle,
   };
 };
